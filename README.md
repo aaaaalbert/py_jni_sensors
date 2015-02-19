@@ -42,7 +42,6 @@ once more), or
 interpreter, and handle passing the VM pointer in a C-defined Python-importable 
 module.
 
-09876543210987654321098765432109876543210987654321098765432109876543210987654321
 Either way, the SB should end up with a pointer to the VM, or rather a Repy 
 API extension wrapping the pointer, so that it can access sensor-reading 
 methods to be implemented in the Java app.
