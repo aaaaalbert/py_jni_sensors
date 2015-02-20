@@ -38,3 +38,25 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
   return JNI_VERSION_1_6;
 }
 
+
+
+/* We'll call this function by name from Java code. 
+ * It will use the `env` pointer to call back through the JNI 
+ * into a Java method we defined.
+ *
+ * Note: I haven't figured out how (or if at all) we can call 
+ *   into methods defined outside of our package, other than 
+ *   by providing Java wrappers inside our package for them. 
+ *   (I defined such a wrapper to be used in this native function in 
+ *   com.sensibility_testbed.ScriptApplication.getSystemTime).
+ *   The JNI specs seem to indicate we are restricted to 
+ *   our package, specifically the calling class and superclasses, 
+ *   when using JNI's `GetMethodID`:
+ *   http://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/functions.html#wp16664
+ */
+void Java_com_sensibility_1testbed_ScriptApplication_logSystemTime(
+    JNIEnv* env, jobject this) {
+  jclass clazz = (*env)->GetObjectClass(env, this);
+  jmethodID method_id = (*env)->GetMethodID(env, clazz, "getSystemTime", "()I");
+  LOGI("Hi! It's %i seconds past the epoch!", (int)(*env)->CallLongMethod(env, clazz, method_id));
+}
