@@ -19,6 +19,9 @@ through JNI. This is tested on an old Android 2.3.7 phone.
 
 The app (in branch `jni-sensors`) includes a built shared object of this library. 
 You can go build the app, run it, and watch your `logcat` for `jnitest` messages.
+The functionality is included so that it runs when you start the app. Installing 
+SL4A, unpacking Python, etc. is not required for the log messages to appear.
+
 
 
 # What's next
