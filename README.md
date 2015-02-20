@@ -1,9 +1,37 @@
 # py_jni_sensors
 
 This project will implement an *embedded Python interpreter* in C that 
-includes functionality to call into a running JVM to interact with it.
+includes functionality to call into a running JVM to interact with it, 
+especially to read out sensor values.
 (The target platform is Android, so NDK will be used to build the project, 
 and we will call into the Dalvik VM that does not support all of JNI's methods.)
+
+
+# What works today
+
+As of SensibilityTestbed@cbee6ffb4f6dc3e03dc47679aefb4e4b3196e64a (for this repo) and 
+SensibilityTestbed@e34db5bc445f154372f8fa731bc5584e56ec7727 (for the app), 
+the [native library is called correctly](https://github.com/SensibilityTestbed/py_jni_sensors/blob/master/jni/jnitest.c#L36-L39) 
+when the [Java code loads it](https://github.com/SensibilityTestbed/sensibility-testbed/blob/e34db5bc445f154372f8fa731bc5584e56ec7727/SensibilityTestbed/src/com/sensibility_testbed/ScriptApplication.java#L48).
+Furthermore, the Java code [defines a method](https://github.com/SensibilityTestbed/sensibility-testbed/blob/e34db5bc445f154372f8fa731bc5584e56ec7727/SensibilityTestbed/src/com/sensibility_testbed/ScriptApplication.java#L38-L41) 
+that is then [called by the native lib](https://github.com/SensibilityTestbed/py_jni_sensors/blob/master/jni/jnitest.c#L60) 
+through JNI. This is tested on an old Android 2.3.7 phone.
+
+The app (in branch `jni-sensors`) includes a built shared object of this library. 
+You can go build the app, run it, and watch your `logcat` for `jnitest` messages.
+
+
+# What's next
+
+* Architecture: Figure out where to put the sensor drivers. I'm thinking of `package com.sensibility_testbed.sensors`, i.e. a separate dir in the source tree.
+* Implementation:
+ * Embed the Python interpreter in the lib
+ * Define a module in the lib that the Python interpreter can import
+ * Make that module call into Java through the JNI
+
+
+
+# Background
 
 Here is a rough code layout:
 * A function so that the Java app `System.loadLibrary`ing this lib 
