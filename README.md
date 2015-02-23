@@ -18,7 +18,13 @@ It's worth mentioning that the app currently [includes a workaround](https://git
 that loads the shared library required by our embbeded Python interpreter 
 before loading the interpreter. This works around a bug manifesting when 
 our library is loaded, and the required lib cannot be found as it is 
-searched for in an incorrect directory. Interestingly, this incorrect 
+searched for in an incorrect directory:
+
+```
+E/AndroidRuntime(20589): java.lang.UnsatisfiedLinkError: Cannot load library: link_image[1962]:   135 could not load needed library './obj/local/armeabi/libpython2.7.so' for 'libembedded_python_test.so' (load_library[1104]: Library './obj/local/armeabi/libpython2.7.so' not found)
+```
+
+Interestingly, this incorrect 
 path is set directly in the shared object we build from this repo, see 
 this line in the output of `readelf --all libembedded_python_test.so`:
 
