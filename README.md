@@ -9,14 +9,27 @@ and we will call into the Dalvik VM that does not support all of JNI's methods.)
 
 # What works today
 
-As of SensibilityTestbed@cbee6ffb4f6dc3e03dc47679aefb4e4b3196e64a (for this repo) and 
-SensibilityTestbed@e34db5bc445f154372f8fa731bc5584e56ec7727 (for the app), 
-the [native library is called correctly](https://github.com/SensibilityTestbed/py_jni_sensors/blob/master/jni/jnitest.c#L36-L39) 
-when the [Java code loads it](https://github.com/SensibilityTestbed/sensibility-testbed/blob/e34db5bc445f154372f8fa731bc5584e56ec7727/SensibilityTestbed/src/com/sensibility_testbed/ScriptApplication.java#L48).
-Furthermore, the Java code [defines a method](https://github.com/SensibilityTestbed/sensibility-testbed/blob/e34db5bc445f154372f8fa731bc5584e56ec7727/SensibilityTestbed/src/com/sensibility_testbed/ScriptApplication.java#L38-L41) 
-that is then [called by the native lib](https://github.com/SensibilityTestbed/py_jni_sensors/blob/master/jni/jnitest.c#L60) 
-through JNI. This is tested on an old Android 2.3.7 phone.
+As of e8ebeca5adf2c297c19b706b8ce941f35b671b4b (for this repo) and 
+84d4b5dfadbe809ebd7c8396996824943eb8cd16 (for the app), 
+the Java code succeeds calling [the embedded Python interpreter](https://github.com/SensibilityTestbed/py_jni_sensors/blob/master/jni/embedded_python_test.c#L44-L51). 
+How nice! Again, this is tested on an old Android 2.3.7 phone.
 
+It's worth mentioning that the app currently [includes a workaround](https://github.com/SensibilityTestbed/sensibility-testbed/blob/84d4b5dfadbe809ebd7c8396996824943eb8cd16/SensibilityTestbed/src/com/sensibility_testbed/ScriptApplication.java#L57) 
+that loads the shared library required by our embbeded Python interpreter 
+before loading the interpreter. This works around a bug manifesting when 
+our library is loaded, and the required lib cannot be found as it is 
+searched for in an incorrect directory. Interestingly, this incorrect 
+path is set directly in the shared object we build from this repo, see 
+this line in the output of `readelf --all libembedded_python_test.so`:
+
+```
+ 0x00000001 (NEEDED)                     Shared library: [./obj/local/armeabi/libpython2.7.so]
+```
+
+I wonder how we can fix up that path during the build process.
+
+
+Notes for replicating the experiment setup: 
 The app (in branch `jni-sensors`) includes a built shared object of this library. 
 You can go build the app, run it, and watch your `logcat` for `jnitest` messages.
 The functionality is included so that it runs when you start the app. Installing 
@@ -28,7 +41,7 @@ SL4A, unpacking Python, etc. is not required for the log messages to appear.
 
 * Architecture: Figure out where to put the sensor drivers. I'm thinking of `package com.sensibility_testbed.sensors`, i.e. a separate dir in the source tree.
 * Implementation:
- * Embed the Python interpreter in the lib
+ * ~~Embed the Python interpreter in the lib~~
  * Define a module in the lib that the Python interpreter can import
  * Make that module call into Java through the JNI
 
