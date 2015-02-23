@@ -39,10 +39,7 @@ include $(CLEAR_VARS)
 
 # LOCAL_C_INCLUDES are automatically set up through LOCAL_EXPORT_C_INCLUDES 
 # above, and our `#include`ing Python.h.
-
-# XXX Make python2.7 a static include so as to work around load_library errors
-# https://stackoverflow.com/questions/12873261/ld-library-path-ignored-on-android-sometimes/12927020#12927020
-LOCAL_STATIC_LIBRARIES := python2.7
+LOCAL_SHARED_LIBRARIES := python2.7
 LOCAL_LDLIBS    := -llog
 LOCAL_MODULE    := embedded_python_test
 LOCAL_SRC_FILES := embedded_python_test.c

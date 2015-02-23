@@ -1,5 +1,6 @@
 /*
- * Test that we can start a Python interpreter from Java using the JNI.
+ * Test that we can start a Python interpreter from Java using the JNI, 
+ * and call a Python function that logs to the Android log.
  */
 
 /*
@@ -39,13 +40,36 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 
+
+/* Python-callable wrapper for LOGI */
+static void
+androidlog_log(PyObject *self, PyObject *python_string)
+{
+  LOGI("%s", PyString_AsString(python_string));
+}
+
+
+
+/* Describe to Python how the method should be called */
+static PyMethodDef AndroidlogMethods[] = {
+    {"log", androidlog_log, METH_O,
+     "Log an informational string to the Android log."},
+    {NULL, NULL, 0, NULL}
+};
+
+
+
 void Java_com_sensibility_1testbed_ScriptApplication_nudgePythonInterpreter(
     JNIEnv* env, jobject this) {
   LOGI("Will start embedded Python interpreter now");
   Py_Initialize();
+
+  LOGI("Initializing androidlog module");
+  Py_InitModule("androidlog", AndroidlogMethods);
+
   LOGI("EmbPy initted");
-  PyRun_SimpleString("from time import time,ctime\n"
-                     "print 'Today is',ctime(time())\n");
+  PyRun_SimpleString("import androidlog\n"
+                     "androidlog.log('Python wants to say hi too')\n");
   LOGI("EmbPy done");
   Py_Finalize();
   LOGI("EmbPy finalized");
