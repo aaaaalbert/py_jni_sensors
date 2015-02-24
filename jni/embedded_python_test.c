@@ -42,10 +42,11 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 
 /* Python-callable wrapper for LOGI */
-static void
+static PyObject*
 androidlog_log(PyObject *self, PyObject *python_string)
 {
   LOGI("%s", PyString_AsString(python_string));
+  Py_RETURN_NONE;  // I.e., `return Py_None;` with reference counting
 }
 
 
