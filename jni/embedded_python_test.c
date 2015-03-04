@@ -29,6 +29,15 @@
 
 #define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, __FILE__, __VA_ARGS__))
 
+/* Global variables to cache stuff we get from Java calling 
+ * into this lib. We'll need these cached values to call back 
+ * into Java through JNI later on.
+ */
+
+JNIEnv* cached_env;
+jobject cached_this;
+
+
 
 /*
  * Called when the Java code does `System.loadLibrary()`.
@@ -51,10 +60,28 @@ androidlog_log(PyObject *self, PyObject *python_string)
 
 
 
+/* Test function to call from Python into Java */
+static PyObject* get_system_time_from_java(PyObject *self) {
+  int thetime;
+
+  // LOGI("Called in just fine");
+  jclass clazz = (*cached_env)->GetObjectClass(cached_env, cached_this);
+  jmethodID method_id = (*cached_env)->GetMethodID(cached_env, clazz, "getSystemTime", "()I");
+
+  thetime = (int)(*cached_env)->CallLongMethod(cached_env, clazz, method_id);
+
+  // LOGI("Alright, goodbye");
+  return Py_BuildValue("i", thetime);
+}
+
+
+
 /* Describe to Python how the method should be called */
 static PyMethodDef AndroidlogMethods[] = {
     {"log", androidlog_log, METH_O,
      "Log an informational string to the Android log."},
+    {"get_system_time", get_system_time_from_java, METH_NOARGS,
+     "Get the system time (from Java through JNI)"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -62,6 +89,10 @@ static PyMethodDef AndroidlogMethods[] = {
 
 void Java_com_sensibility_1testbed_ScriptApplication_nudgePythonInterpreter(
     JNIEnv* env, jobject this) {
+  // Store these references for other functions to use
+  cached_env = env;
+  cached_this = this;
+
   LOGI("Will start embedded Python interpreter now");
   Py_Initialize();
 
