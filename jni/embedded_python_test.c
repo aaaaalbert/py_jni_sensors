@@ -36,8 +36,9 @@
 
 JNIEnv* cached_env;
 jobject cached_this;
-
-
+jclass cached_clazz;
+int (*cached_java_function_pointer)(JNIEnv*, jclass, jmethodID);
+jmethodID cached_method_id;
 
 /*
  * Called when the Java code does `System.loadLibrary()`.
@@ -62,16 +63,7 @@ androidlog_log(PyObject *self, PyObject *python_string)
 
 /* Test function to call from Python into Java */
 static PyObject* get_system_time_from_java(PyObject *self) {
-  int thetime;
-
-  // LOGI("Called in just fine");
-  jclass clazz = (*cached_env)->GetObjectClass(cached_env, cached_this);
-  jmethodID method_id = (*cached_env)->GetMethodID(cached_env, clazz, "getSystemTime", "()I");
-
-  thetime = (int)(*cached_env)->CallLongMethod(cached_env, clazz, method_id);
-
-  // LOGI("Alright, goodbye");
-  return Py_BuildValue("i", thetime);
+  return Py_BuildValue("i",  (*cached_env)->CallLongMethod(cached_env, cached_clazz, cached_method_id));
 }
 
 
@@ -89,9 +81,13 @@ static PyMethodDef AndroidlogMethods[] = {
 
 void Java_com_sensibility_1testbed_ScriptApplication_nudgePythonInterpreter(
     JNIEnv* env, jobject this) {
+  LOGI("Caching bits and bobs....");
   // Store these references for other functions to use
   cached_env = env;
   cached_this = this;
+  cached_clazz = (*env)->GetObjectClass(env, this);
+  cached_method_id = (*env)->GetMethodID(env, cached_clazz, "getSystemTime", "()I");
+  cached_java_function_pointer = (*cached_env)->CallLongMethod;
 
   LOGI("Will start embedded Python interpreter now");
   Py_Initialize();
