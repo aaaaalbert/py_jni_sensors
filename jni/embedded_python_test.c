@@ -65,12 +65,26 @@ void Java_com_sensibility_1testbed_ScriptApplication_nudgePythonInterpreter(
   LOGI("Will start embedded Python interpreter now");
   Py_Initialize();
 
+  // Print stats about the environment
+  LOGI("ProgramName %s", (char*) Py_GetProgramName());
+  LOGI("Prefix %s", Py_GetPrefix());
+  LOGI("ExecPrefix %s", Py_GetExecPrefix());
+  LOGI("ProgramFullName %s", Py_GetProgramFullPath());
+  LOGI("Path %s", Py_GetPath());
+  LOGI("Platform %s", Py_GetPlatform());
+  LOGI("PythonHome %s", Py_GetPythonHome());
+
+
   LOGI("Initializing androidlog module");
   Py_InitModule("androidlog", AndroidlogMethods);
 
   LOGI("EmbPy initted");
-  PyRun_SimpleString("import androidlog\n"
-                     "androidlog.log('Python wants to say hi too')\n");
+  char* my_script = "/sdcard/testthis.py";
+  FILE* fp;
+
+  fp = fopen(my_script, "r");
+  PyRun_SimpleFile(fp, my_script);
+
   LOGI("EmbPy done");
   Py_Finalize();
   LOGI("EmbPy finalized");
