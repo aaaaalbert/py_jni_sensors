@@ -1,6 +1,5 @@
 /*
- * Test that we can start a Python interpreter from Java using the JNI, 
- * and call a Python function that logs to the Android log.
+ * Access a Field in Java through JNI.
  */
 
 /*
@@ -37,8 +36,9 @@
 JNIEnv* cached_env;
 jobject cached_this;
 jclass cached_clazz;
-int (*cached_java_function_pointer)(JNIEnv*, jclass, jmethodID);
+jclass cached_sensorservice_class;
 jmethodID cached_method_id;
+jfieldID cached_field_id;
 
 /*
  * Called when the Java code does `System.loadLibrary()`.
@@ -68,12 +68,22 @@ static PyObject* get_system_time_from_java(PyObject *self) {
 
 
 
+/* Get accelerometer data string */
+static PyObject* get_accelerometer_from_java(PyObject *self) {
+  return Py_BuildValue("s",  (*cached_env)->GetObjectField(cached_env, 
+      cached_sensorservice_class, cached_field_id));
+}
+
+
+
 /* Describe to Python how the method should be called */
 static PyMethodDef AndroidlogMethods[] = {
     {"log", androidlog_log, METH_O,
      "Log an informational string to the Android log."},
     {"get_system_time", get_system_time_from_java, METH_NOARGS,
      "Get the system time (from Java through JNI)"},
+    {"get_accelerometer", get_accelerometer_from_java, METH_NOARGS,
+     "Get an accelerometer data string (from Java through JNI)"},
     {NULL, NULL, 0, NULL}
 };
 
@@ -87,8 +97,14 @@ void Java_com_sensibility_1testbed_ScriptApplication_nudgePythonInterpreter(
   cached_this = this;
   cached_clazz = (*env)->GetObjectClass(env, this);
   cached_method_id = (*env)->GetMethodID(env, cached_clazz, "getSystemTime", "()I");
-  cached_java_function_pointer = (*cached_env)->CallLongMethod;
 
+  /*
+  LOGI("Trying to find class");
+  cached_sensorservice_class = (*env)->FindClass(env, "Lcom/sensibility_testbed/SensorService;");
+
+  LOGI("Found class, getting field ID");
+  cached_field_id = (*env)->GetFieldID(env, cached_sensorservice_class, "accelerometerValues", "Ljava/lang/String;");
+*/
   LOGI("Will start embedded Python interpreter now");
   Py_Initialize();
 
