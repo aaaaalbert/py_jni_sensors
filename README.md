@@ -9,47 +9,37 @@ and we will call into the Dalvik VM that does not support all of JNI's methods.)
 
 # What works today
 
-As of e8ebeca5adf2c297c19b706b8ce941f35b671b4b (for this repo) and 
-84d4b5dfadbe809ebd7c8396996824943eb8cd16 (for the app), 
-the Java code succeeds calling [the embedded Python interpreter](https://github.com/SensibilityTestbed/py_jni_sensors/blob/master/jni/embedded_python_test.c#L44-L51). 
-How nice! Again, this is tested on an old Android 2.3.7 phone.
+SensibilityTestbed@78afe45f1ab752e7a9a09f28fd81b3226a046e65 (this repo)
+made it so we could call a method in Java that was defined in the same 
+class that also started the embedded Python interpreter, 
+SensibilityTestbed@6970db7944a2c66d24a830c3802fd18c89115dfa (the app). 
+This was done so we could benchmark this approach and using the "native", 
+Python-supplied library for comparison.
 
-It's worth mentioning that the app currently [includes a workaround](https://github.com/SensibilityTestbed/sensibility-testbed/blob/84d4b5dfadbe809ebd7c8396996824943eb8cd16/SensibilityTestbed/src/com/sensibility_testbed/ScriptApplication.java#L57) 
-that loads the shared library required by our embbeded Python interpreter 
-before loading the interpreter. This works around a bug manifesting when 
-our library is loaded, and the required lib cannot be found as it is 
-searched for in an incorrect directory:
+## T.M.I.
+The two call stacks look approximately like this,
+* Python program --> Python's native `time` library, `time.so` --> the OS's native `gettimeofday()` or `ftime()` functions
+* Python program --> my C lib function --> JNI --> a private method in our app --> the Java `System` class (and anything it does behind the scenes).
 
-```
-E/AndroidRuntime(20589): java.lang.UnsatisfiedLinkError: Cannot load library: link_image[1962]:   135 could not load needed library './obj/local/armeabi/libpython2.7.so' for 'libembedded_python_test.so' (load_library[1104]: Library './obj/local/armeabi/libpython2.7.so' not found)
-```
-
-Interestingly, this incorrect 
-path is set directly in the shared object we build from this repo, see 
-this line in the output of `readelf --all libembedded_python_test.so`:
-
-```
- 0x00000001 (NEEDED)                     Shared library: [./obj/local/armeabi/libpython2.7.so]
-```
-
-I wonder how we can fix up that path during the build process.
-
-
-Notes for replicating the experiment setup: 
-The app (in branch `jni-sensors`) includes a built shared object of this library. 
-You can go build the app, run it, and watch your `logcat` for `jnitest` messages.
-The functionality is included so that it runs when you start the app. Installing 
-SL4A, unpacking Python, etc. is not required for the log messages to appear.
-
+The overhead of JNI (when looked-up classes, methods etc. are cached) is around 8 microseconds over the 14us "native" call. Not too bad for the old phone I'm testing on.
 
 
 # What's next
+Yanyan started implementing a sensor driver for the accelerometer, and 
+we are trying to figure out how to best get the values back into Python. 
+Her current implementation, SensibilityTestbed@319b83c0e8bddd211b5fe72338a9b8d545cba661, 
+adds a *service* to our app that runs in the background and is triggered when 
+new sensor values arrive.
 
-* Architecture: Figure out where to put the sensor drivers. I'm thinking of `package com.sensibility_testbed.sensors`, i.e. a separate dir in the source tree.
-* Implementation:
- * ~~Embed the Python interpreter in the lib~~
- * Define a module in the lib that the Python interpreter can import
- * Make that module call into Java through the JNI
+I added a member variable to the `SensorService` class in 
+SensibilityTestbed@d88f0b5e440f6ef9545c8749db8383e5b208262b (the app) and 
+tried in SensibilityTestbed@e1edce8821a3961768b422e053c7a71b03b566af to let 
+this lib access the variable, but had no success because my use of 
+`GetFieldID` returns no result at the moment.
+
+Sure, we can write a getter method and use the working concepts of the previous 
+versions of this lib to access it, but I would like add field accesss to our 
+`py_jni` toolbox....
 
 
 
