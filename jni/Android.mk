@@ -26,9 +26,11 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := python2.7
-LOCAL_SRC_FILES := ../python2.7-libs/lib/libpython2.7.so
-# This is where the header files declaring the module's functions live:
-LOCAL_EXPORT_C_INCLUDES := python2.7-libs/include
+LOCAL_SRC_FILES := ../python-bin/python/lib/libpython2.7.so
+# This is where the header files declaring the module's 
+# functions live. I extracted the dir from my python-for-android 
+# build, python-for-android/python-build/python_arm/
+LOCAL_EXPORT_C_INCLUDES := python-lib/python/include
 
 include $(PREBUILT_SHARED_LIBRARY)
 
